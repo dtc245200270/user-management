@@ -23,9 +23,7 @@ public class UserServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-        if (action == null) {
-            action = "";
-        }
+        if (action == null) action = "";
         try {
             switch (action) {
                 case "create":
@@ -37,6 +35,9 @@ public class UserServlet extends HttpServlet {
                 case "delete":
                     deleteUser(request, response);
                     break;
+                case "search":
+                    searchByCountry(request, response);
+                    break;
             }
         } catch (Exception ex) {
             throw new ServletException(ex);
@@ -46,9 +47,7 @@ public class UserServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-        if (action == null) {
-            action = "";
-        }
+        if (action == null) action = "";
         try {
             switch (action) {
                 case "create":
@@ -59,6 +58,9 @@ public class UserServlet extends HttpServlet {
                     break;
                 case "delete":
                     showDeleteForm(request, response);
+                    break;
+                case "sort":
+                    sortByName(request, response);
                     break;
                 default:
                     listUser(request, response);
@@ -103,22 +105,14 @@ public class UserServlet extends HttpServlet {
 
     private void insertUser(HttpServletRequest request, HttpServletResponse response)
             throws Exception {
-        String name = request.getParameter("name");
-        String email = request.getParameter("email");
-        String country = request.getParameter("country");
-        User newUser = new User(name, email, country);
-        userDAO.insertUser(newUser);
+        userDAO.insertUser(new User(request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
         response.sendRedirect("users");
     }
 
     private void updateUser(HttpServletRequest request, HttpServletResponse response)
             throws Exception {
         int id = Integer.parseInt(request.getParameter("id"));
-        String name = request.getParameter("name");
-        String email = request.getParameter("email");
-        String country = request.getParameter("country");
-        User user = new User(id, name, email, country);
-        userDAO.updateUser(user);
+        userDAO.updateUser(new User(id, request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
         response.sendRedirect("users");
     }
 
@@ -127,5 +121,22 @@ public class UserServlet extends HttpServlet {
         int id = Integer.parseInt(request.getParameter("id"));
         userDAO.deleteUser(id);
         response.sendRedirect("users");
+    }
+
+    private void searchByCountry(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String country = request.getParameter("country");
+        List<User> listUser = userDAO.findByCountry(country);
+        request.setAttribute("listUser", listUser);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("user/list.jsp");
+        dispatcher.forward(request, response);
+    }
+
+    private void sortByName(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        List<User> listUser = userDAO.sortByName();
+        request.setAttribute("listUser", listUser);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("user/list.jsp");
+        dispatcher.forward(request, response);
     }
 }
